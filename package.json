@@ -1,0 +1,17 @@
+{
+  "name": "dogchef-lab",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "db:migrate": "pnpm --filter @dogchef/db prisma migrate dev",
+    "db:generate": "pnpm --filter @dogchef/db prisma generate",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0"
+  }
+}
