@@ -1,0 +1,186 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  dogs      Dog[]
+  payments  Payment[]
+  events    Event[]
+  files     File[]
+  plans     Plan[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Dog {
+  id        Int      @id @default(autoincrement())
+  name      String
+  owner     User     @relation(fields: [ownerId], references: [id])
+  ownerId   Int
+  plans     Plan[]
+  requirements NutrientRequirement[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+}
+
+model Ingredient {
+  id                 Int                 @id @default(autoincrement())
+  name               String              @unique
+  recipeIngredients  RecipeIngredient[]
+  nutrientAmounts    IngredientNutrient[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Recipe {
+  id                Int                @id @default(autoincrement())
+  name              String
+  ingredients       RecipeIngredient[]
+  nutrients         RecipeNutrient[]
+  compliances       RecipeCompliance[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model RecipeIngredient {
+  recipe       Recipe     @relation(fields: [recipeId], references: [id])
+  recipeId     Int
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  ingredientId Int
+  quantity     Float
+
+  @@id([recipeId, ingredientId])
+  @@index([ingredientId])
+}
+
+model NutrientStandard {
+  id              Int                @id @default(autoincrement())
+  name            String             @unique
+  unit            String?
+  requirements    NutrientRequirement[]
+  ingredientValues IngredientNutrient[]
+  recipeValues    RecipeNutrient[]
+}
+
+model IngredientNutrient {
+  ingredient   Ingredient       @relation(fields: [ingredientId], references: [id])
+  ingredientId Int
+  standard     NutrientStandard @relation(fields: [standardId], references: [id])
+  standardId   Int
+  amount       Float
+
+  @@id([ingredientId, standardId])
+  @@index([standardId])
+}
+
+model NutrientRequirement {
+  id         Int             @id @default(autoincrement())
+  dog        Dog             @relation(fields: [dogId], references: [id])
+  dogId      Int
+  standard   NutrientStandard @relation(fields: [standardId], references: [id])
+  standardId Int
+  amount     Float
+
+  @@unique([dogId, standardId])
+  @@index([standardId])
+}
+
+model RecipeNutrient {
+  recipe     Recipe          @relation(fields: [recipeId], references: [id])
+  recipeId   Int
+  standard   NutrientStandard @relation(fields: [standardId], references: [id])
+  standardId Int
+  amount     Float
+
+  @@id([recipeId, standardId])
+  @@index([standardId])
+}
+
+model RecipeCompliance {
+  id            Int                @id @default(autoincrement())
+  recipe        Recipe             @relation(fields: [recipeId], references: [id])
+  recipeId      Int
+  requirement   NutrientRequirement @relation(fields: [requirementId], references: [id])
+  requirementId Int
+  compliant     Boolean
+
+  @@unique([recipeId, requirementId])
+  @@index([requirementId])
+}
+
+model Plan {
+  id        Int          @id @default(autoincrement())
+  dog       Dog          @relation(fields: [dogId], references: [id])
+  dogId     Int
+  offer     PartnerOffer? @relation(fields: [offerId], references: [id])
+  offerId   Int?
+  startDate DateTime
+  endDate   DateTime?
+  payments  Payment[]
+
+  @@index([dogId])
+  @@index([offerId])
+}
+
+model Partner {
+  id     Int           @id @default(autoincrement())
+  name   String        @unique
+  offers PartnerOffer[]
+}
+
+model PartnerOffer {
+  id        Int      @id @default(autoincrement())
+  partner   Partner  @relation(fields: [partnerId], references: [id])
+  partnerId Int
+  description String?
+  plans     Plan[]
+
+  @@index([partnerId])
+}
+
+model Event {
+  id        Int      @id @default(autoincrement())
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    Int?
+  type      String
+  timestamp DateTime @default(now())
+
+  @@index([userId])
+}
+
+model File {
+  id        Int      @id @default(autoincrement())
+  url       String
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    Int?
+  uploadedAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Payment {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  plan      Plan?    @relation(fields: [planId], references: [id])
+  planId    Int?
+  amount    Int
+  status    String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([planId])
+}
+
